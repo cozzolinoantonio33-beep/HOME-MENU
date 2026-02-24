@@ -15,7 +15,7 @@
         button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s; margin-top: 25px; }
         button:hover { background: #1557b0; }
         .ciro-section { background: #e8f0fe; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 5px solid #1a73e8; }
-        #status { margin-top: 15px; font-weight: bold; text-align: center; }
+        #status { margin-top: 15px; font-weight: bold; text-align: center; min-height: 20px; }
         .success { color: #28a745; }
         .error { color: #dc3545; }
     </style>
@@ -44,7 +44,7 @@
         <option value="weekend_tavola">Weekend: Tavola (Classico)</option>
     </select>
 
-    <label>Stagionalità (Tieni premuto Ctrl o Cmd per selezionare più stagioni)</label>
+    <label>Stagionalità (Ctrl/Cmd per più scelte)</label>
     <select id="stagione" multiple>
         <option value="Invernale">Invernale (Gen-Mar)</option>
         <option value="Primaverile">Primaverile (Mar-Mag)</option>
@@ -59,15 +59,17 @@
         </label>
     </div>
 
-    <button onclick="salvaRicetta()">SALVA NEL RICETTARIO</button>
+    <button id="btn-salva">SALVA NEL RICETTARIO</button>
     <p id="status"></p>
 </div>
 
 <script>
+    // Configurazione Supabase
     const SUPABASE_URL = 'https://rudlmnqoqcwrmxnmuitg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZGxtbnFvcWN3cm14bm11aXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MzU3MjMsImV4cCI6MjA4NzUxMTcyM30.E9_gzEyoa6-fBXxETuj41YlGSFRRqXjZHkb4oWB8LeQ';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // La tua chiave
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Funzione di salvataggio
     async function salvaRicetta() {
         const nome = document.getElementById('nome').value;
         const categoria = document.getElementById('categoria').value;
@@ -76,12 +78,12 @@
         const statusEl = document.getElementById('status');
 
         if (!nome) {
-            statusEl.innerText = "Inserisci il nome del piatto!";
+            statusEl.innerText = "⚠️ Inserisci il nome del piatto!";
             statusEl.className = "error";
             return;
         }
 
-        statusEl.innerText = "Salvataggio in corso...";
+        statusEl.innerText = "⏳ Salvataggio in corso...";
         statusEl.className = "";
 
         const { data, error } = await supabase
@@ -95,14 +97,20 @@
             }]);
 
         if (error) {
-            statusEl.innerText = "Errore: " + error.message;
+            statusEl.innerText = "❌ Errore: " + error.message;
             statusEl.className = "error";
+            console.error(error);
         } else {
             statusEl.innerText = "✅ Ricetta salvata con successo!";
             statusEl.className = "success";
             document.getElementById('nome').value = '';
+            // Reset stagioni (opzionale)
+            document.getElementById('stagione').selectedIndex = -1;
         }
     }
+
+    // Agganciamo l'evento al click del bottone dopo che il DOM è caricato
+    document.getElementById('btn-salva').addEventListener('click', salvaRicetta);
 </script>
 
 </body>
