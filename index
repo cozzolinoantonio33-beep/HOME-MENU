@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurazione Ricettario</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #444; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        select[multiple] { height: 100px; }
+        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s; margin-top: 25px; }
+        button:hover { background: #1557b0; }
+        .ciro-section { background: #e8f0fe; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 5px solid #1a73e8; }
+        #status { margin-top: 15px; font-weight: bold; text-align: center; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Nuova Ricetta</h2>
+    
+    <label>Nome del Piatto</label>
+    <input type="text" id="nome" placeholder="es. Risotto ai Funghi">
+
+    <label>Slot nel tuo schema settimanale</label>
+    <select id="categoria">
+        <option value="minestrone_insalata">Lunedì: Minestrone/Insalata</option>
+        <option value="pesce">Lunedì: Pesce</option>
+        <option value="pasta">Martedì: Pasta</option>
+        <option value="carne_rossa_maiale">Martedì: Carne Rossa/Maiale</option>
+        <option value="formaggio_gallette">Mercoledì: Formaggio/Gallette</option>
+        <option value="pasta_legumi">Mercoledì: Pasta+Legumi</option>
+        <option value="legumi_pasta_formaggio">Giovedì: Legumi+Pasta/Formaggio</option>
+        <option value="pollo">Giovedì: Pollo</option>
+        <option value="pasta_patate_formaggio">Venerdì: Pasta/Patate/Formaggio</option>
+        <option value="sugo_pronto">Venerdì: Sugo Pronto</option>
+        <option value="weekend_divano">Weekend: Divano (Relax)</option>
+        <option value="weekend_tavola">Weekend: Tavola (Classico)</option>
+    </select>
+
+    <label>Stagionalità (Tieni premuto Ctrl o Cmd per selezionare più stagioni)</label>
+    <select id="stagione" multiple>
+        <option value="Invernale">Invernale (Gen-Mar)</option>
+        <option value="Primaverile">Primaverile (Mar-Mag)</option>
+        <option value="Estivo">Estivo (Mag-Lug / Set-Ott)</option>
+        <option value="Autunnale">Autunnale (Ott-Dic)</option>
+    </select>
+
+    <div class="ciro-section">
+        <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="per_ciro" style="width: 25px; height: 25px; margin-right: 15px;" checked> 
+            Lo mangia anche Ciro?
+        </label>
+    </div>
+
+    <button onclick="salvaRicetta()">SALVA NEL RICETTARIO</button>
+    <p id="status"></p>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://rudlmnqoqcwrmxnmuitg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZGxtbnFvcWN3cm14bm11aXRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MzU3MjMsImV4cCI6MjA4NzUxMTcyM30.E9_gzEyoa6-fBXxETuj41YlGSFRRqXjZHkb4oWB8LeQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function salvaRicetta() {
+        const nome = document.getElementById('nome').value;
+        const categoria = document.getElementById('categoria').value;
+        const per_ciro = document.getElementById('per_ciro').checked;
+        const stagione = Array.from(document.getElementById('stagione').selectedOptions).map(o => o.value);
+        const statusEl = document.getElementById('status');
+
+        if (!nome) {
+            statusEl.innerText = "Inserisci il nome del piatto!";
+            statusEl.className = "error";
+            return;
+        }
+
+        statusEl.innerText = "Salvataggio in corso...";
+        statusEl.className = "";
+
+        const { data, error } = await supabase
+            .from('ricette')
+            .insert([{ 
+                nome: nome, 
+                categoria: categoria, 
+                per_ciro: per_ciro, 
+                stagionalita: stagione,
+                tag_weekend: categoria.startsWith('weekend') ? categoria.split('_')[1] : null
+            }]);
+
+        if (error) {
+            statusEl.innerText = "Errore: " + error.message;
+            statusEl.className = "error";
+        } else {
+            statusEl.innerText = "✅ Ricetta salvata con successo!";
+            statusEl.className = "success";
+            document.getElementById('nome').value = '';
+        }
+    }
+</script>
+
+</body>
+</html>
